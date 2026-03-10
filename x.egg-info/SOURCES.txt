@@ -1,0 +1,11 @@
+pyproject.toml
+x/__init__.py
+x/main.py
+x.egg-info/PKG-INFO
+x.egg-info/SOURCES.txt
+x.egg-info/dependency_links.txt
+x.egg-info/entry_points.txt
+x.egg-info/top_level.txt
+x/commands/__init__.py
+x/commands/hello.py
+x/commands/wtf.py
