@@ -1,18 +1,22 @@
 import sys
-from x.commands import hello
-from x.commands import wtf
+import click
+
+from x.commands import hello as hello_cmd
+from x.commands import wtf as wtf_cmd
+
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+def hello():
+    """Say hello."""
+    hello_cmd.run()
+
+@cli.command()
+def wtf():
+    """Analyze the last failed command."""
+    wtf_cmd.run()
 
 def main():
-    if len(sys.argv) < 2:
-     print("Use: python3 x.py commands")
-     return
-
-    commands = sys.argv[1]
-
-    if commands == "hello":
-        hello.run()
-    elif commands == "wtf":
-        wtf.run()
-    else:
-        print(f"Unknow command: {command}")
-
+    cli()
