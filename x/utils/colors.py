@@ -9,10 +9,10 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 
 def error(text):
-    return f"{RED}{BOLD}{text}{RESET}"
+    return f"{RED}{text}{RESET}"
 
 def command(text):
-    return f"{ORANGE}{BOLD}{text}{RESET}"
+    return f"{ORANGE}{text}{RESET}"
 
 def success(text):
     return f"{GREEN}{text}{RESET}"
