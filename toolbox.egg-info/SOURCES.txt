@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+toolbox.egg-info/PKG-INFO
+toolbox.egg-info/SOURCES.txt
+toolbox.egg-info/dependency_links.txt
+toolbox.egg-info/entry_points.txt
+toolbox.egg-info/requires.txt
+toolbox.egg-info/top_level.txt
+x/__init__.py
+x/main.py
+x/commands/__init__.py
+x/commands/hello.py
+x/commands/wtf.py
+x/utils/__init__.py
+x/utils/ai.py
+x/utils/colors.py
