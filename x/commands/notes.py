@@ -4,6 +4,7 @@ from datetime import date
 from x.utils.colors import info, error
 
 JOURNAL_DIR = os.path.expanduser("~/documents/journal")
+TASKS_FILE = os.path.join(os.path.expanduser("~/documents/journal"), "tasks.md")
 
 def _bat(path, title):
     subprocess.run(["batcat", "--language=md", f"--file-name={title}", path])
@@ -15,8 +16,15 @@ def _files():
         if re.match(r"^\d{4}-\d{2}-\d{2}\.md$", f)
     ])
 
-def run(last=False):
+def run(last=False, tasks=False):
     files = _files()
+
+    if tasks:
+        if os.path.exists(TASKS_FILE):
+            _bat(TASKS_FILE, "tasks.md")
+        else:
+            print(error(f"Task file not found: {TASKS_FILE}"))
+        return
 
     if not files:
         print(error("No notes found."))

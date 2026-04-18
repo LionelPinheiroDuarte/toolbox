@@ -20,10 +20,11 @@ def wtf():
     wtf_cmd.run()
 
 @cli.command()
-@click.option("--last", is_flag=True, help="Show the last created note instead of today's.")
-def notes(last):
-    """Show today's journal note, or the last created one with --last."""
-    notes_cmd.run(last=last)
+@click.option("--last", "-l", is_flag=True, help="Show the last created note.")
+@click.option("--tasks", "-t", is_flag=True, help="Show the task file.")
+def notes(last, tasks):
+    """Show today's journal note, last entry, or task file."""
+    notes_cmd.run(last=last, tasks=tasks)
 
 def main():
     cli()
