@@ -85,17 +85,6 @@ x notes --tasks       # open the task file
 
 ![x notes demo](assets/notes.gif)
 
-### x wtf
-
-```bash
-$ ls ~/non-existent-folder
-ls: cannot access '/home/user/non-existent-folder': No such file or directory
-
-$ x wtf
-Command: ls ~/non-existent-folder
-Error: ls: cannot access '/home/user/non-existent-folder': No such file or directory
-```
-
 ---
 
 ## Project structure
