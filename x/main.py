@@ -4,6 +4,7 @@ import click
 from x.commands import hello as hello_cmd
 from x.commands import wtf as wtf_cmd
 from x.commands import notes as notes_cmd
+from x.commands import repos as repos_cmd
 
 @click.group()
 def cli():
@@ -25,6 +26,18 @@ def wtf():
 def notes(last, tasks):
     """Show today's journal note, last entry, or task file."""
     notes_cmd.run(last=last, tasks=tasks)
+
+@cli.command()
+@click.option("--single", "-s", default=None, help="Clone a single repo by name.")
+@click.option("--language", "-l", default=None, help="Clone all repos matching a language.")
+@click.option("--all", "all_repos", is_flag=True, help="Clone all repos.")
+@click.option("--dest", "-d", default=repos_cmd.DEFAULT_DEST, show_default=True, help="Destination directory.")
+def repos(single, language, all_repos, dest):
+    """Clone GitHub repos with optional filters."""
+    if not any([single, language, all_repos]):
+        import click as _click
+        raise _click.UsageError("Specify --single, --language, or --all.")
+    repos_cmd.run(single=single, language=language, all_repos=all_repos, dest=dest)
 
 def main():
     cli()
