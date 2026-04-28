@@ -8,12 +8,10 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 
 | Command | Description |
 |---------|-------------|
-| `x wtf` | Analyze the last failed shell command via AI |
-| `x notes` | Browse journal notes with syntax highlighting |
-| `x repos` | Clone GitHub repos with optional filters |
-| `x sync` | Sync Claude memory and journal notes to Nextcloud |
-
-Full documentation for each command: [`x/commands/`](x/commands/README.md)
+| [`x wtf`](x/commands/wtf/README.md) | Analyze the last failed shell command via AI |
+| [`x notes`](x/commands/notes/README.md) | Browse journal notes with syntax highlighting |
+| [`x repos`](x/commands/repos/README.md) | Clone GitHub repos with optional filters |
+| [`x sync`](x/commands/sync/README.md) | Sync Claude memory and journal notes to Nextcloud |
 
 ---
 
@@ -23,7 +21,7 @@ Full documentation for each command: [`x/commands/`](x/commands/README.md)
 - pip
 - `batcat` (for `x notes`)
 - `gh` CLI (for `x repos`)
-- `OPENROUTER_API_KEY` environment variable (for `x wtf`)
+- `OPENROUTER_API_KEY` env variable (for `x wtf`)
 - Nextcloud account + app password (for `x sync`)
 
 ---
@@ -43,59 +41,9 @@ cd toolbox
 pip install -e . --break-system-packages
 ```
 
-### 3. Configure your shell
+### 3. Per-command setup
 
-Add the following to your `~/.bashrc` to enable error capture for `x wtf`:
-
-```bash
-log_output() {
-    local exit_code=$?
-    local last_cmd=$(history 1 | awk '{$1=""; print $0}' | xargs)
-    if [ $exit_code -ne 0 ]; then
-        echo "$last_cmd" > /tmp/last_command.txt
-        case "$last_cmd" in
-            python3*|python*|x\ *|x) ;;
-            *) eval "$last_cmd" 2>/tmp/last_error.txt 1>/dev/null ;;
-        esac
-    fi
-}
-
-PROMPT_COMMAND='log_output'
-```
-
-Then reload your shell:
-
-```bash
-source ~/.bashrc
-```
-
-### 4. Set your API key
-
-`x wtf` sends errors to [OpenRouter](https://openrouter.ai/) for AI analysis:
-
-```bash
-export OPENROUTER_API_KEY=your_key_here
-```
-
----
-
-## Usage
-
-```bash
-x --help                                        # show all available commands
-x wtf                                           # analyze the last failed command
-x notes                                         # open today's journal note
-x notes --last                                  # open the most recent note
-x notes --tasks                                 # open the task file
-x repos --single LionelPinheiroDuarte/toolbox   # clone a single repo
-x repos --language python                       # clone all Python repos
-x sync                                          # sync Claude memory + journal to Nextcloud
-x sync --configure                              # set up Nextcloud credentials
-```
-
-### x notes
-
-![x notes demo](assets/notes.gif)
+Some commands require additional setup — see each command's README linked above.
 
 ---
 
