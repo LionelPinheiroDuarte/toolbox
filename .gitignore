@@ -23,6 +23,9 @@ env/
 .DS_Store
 Thumbs.db
 
+# VHS
+*.tape
+
 # Pytest
 .pytest_cache/
 htmlcov/
