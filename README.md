@@ -6,8 +6,14 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 
 ## Commands
 
-- `x wtf` — captures the last failed shell command and explains it via AI
-- `x notes` — opens today's journal note (or the last one) using `bat`
+| Command | Description |
+|---------|-------------|
+| `x wtf` | Analyze the last failed shell command via AI |
+| `x notes` | Browse journal notes with syntax highlighting |
+| `x repos` | Clone GitHub repos with optional filters |
+| `x sync` | Sync Claude memory and journal notes to Nextcloud |
+
+Full documentation for each command: [`x/commands/`](x/commands/README.md)
 
 ---
 
@@ -16,7 +22,9 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 - Python 3.8+
 - pip
 - `batcat` (for `x notes`)
+- `gh` CLI (for `x repos`)
 - `OPENROUTER_API_KEY` environment variable (for `x wtf`)
+- Nextcloud account + app password (for `x sync`)
 
 ---
 
@@ -25,7 +33,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/eswine/toolbox.git
+git clone https://github.com/LionelPinheiroDuarte/toolbox.git
 cd toolbox
 ```
 
@@ -74,11 +82,15 @@ export OPENROUTER_API_KEY=your_key_here
 ## Usage
 
 ```bash
-x --help              # show all available commands
-x wtf                 # analyze the last failed command
-x notes               # open today's journal note
-x notes --last        # open the most recent note
-x notes --tasks       # open the task file
+x --help                                        # show all available commands
+x wtf                                           # analyze the last failed command
+x notes                                         # open today's journal note
+x notes --last                                  # open the most recent note
+x notes --tasks                                 # open the task file
+x repos --single LionelPinheiroDuarte/toolbox   # clone a single repo
+x repos --language python                       # clone all Python repos
+x sync                                          # sync Claude memory + journal to Nextcloud
+x sync --configure                              # set up Nextcloud credentials
 ```
 
 ### x notes
@@ -95,10 +107,16 @@ toolbox/
 │   ├── __init__.py
 │   ├── main.py
 │   ├── commands/
+│   │   ├── README.md       ← commands index
 │   │   ├── __init__.py
-│   │   ├── hello.py
 │   │   ├── notes.py
-│   │   └── wtf.py
+│   │   ├── notes.md
+│   │   ├── repos.py
+│   │   ├── repos.md
+│   │   ├── sync.py
+│   │   ├── sync.md
+│   │   ├── wtf.py
+│   │   └── wtf.md
 │   └── utils/
 │       ├── __init__.py
 │       ├── ai.py
@@ -115,6 +133,8 @@ toolbox/
 
 - [x] `x wtf` — capture and explain last failed command via AI (OpenRouter)
 - [x] `x notes` — browse journal notes with syntax highlighting
+- [x] `x repos` — clone GitHub repos with optional filters
+- [x] `x sync` — sync Claude memory and journal notes to Nextcloud
 - [x] Gruvbox Dark color formatting
 - [ ] `x history` — browse past errors
 - [ ] `install.sh` — one-line installation script
