@@ -5,6 +5,7 @@ from x.commands import hello as hello_cmd
 from x.commands import wtf as wtf_cmd
 from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
+from x.commands import sync as sync_cmd
 
 @click.group()
 def cli():
@@ -38,6 +39,18 @@ def repos(single, language, all_repos, dest):
         import click as _click
         raise _click.UsageError("Specify --single, --language, or --all.")
     repos_cmd.run(single=single, language=language, all_repos=all_repos, dest=dest)
+
+@cli.command()
+@click.option("--claude", is_flag=True, help="Sync Claude memory files only.")
+@click.option("--journal", is_flag=True, help="Sync journal notes only.")
+@click.option("--configure", "do_configure", is_flag=True, help="Set up Nextcloud credentials.")
+def sync(claude, journal, do_configure):
+    """Sync Claude memory and journal notes to Nextcloud."""
+    if do_configure:
+        sync_cmd.configure()
+        return
+    sync_cmd.run(claude=claude, journal=journal)
+
 
 def main():
     cli()

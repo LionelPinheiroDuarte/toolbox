@@ -10,6 +10,9 @@ dependencies = [
     "click",
     "boto3",
     "openai",
+    "requests",
+    "keyring",
+    "keyrings.alt",
 ]
 
 [project.scripts]
