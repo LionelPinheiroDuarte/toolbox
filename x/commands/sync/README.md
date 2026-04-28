@@ -2,7 +2,7 @@
 
 **What it does:** Uploads Claude memory files and journal Markdown notes to Nextcloud via WebDAV. Credentials are stored in the system keyring (never in plaintext).
 
-![x sync demo](../../assets/sync.gif)
+![x sync demo](../../../assets/sync.gif)
 
 **Sources synced:**
 - `~/.claude/CLAUDE.md`
