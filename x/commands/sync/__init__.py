@@ -68,6 +68,72 @@ def _journal_files():
     ])
 
 
+def _list_remote_files(base_url, auth, remote_dir):
+    url = f"{base_url}/{remote_dir}/"
+    r = requests.request(
+        "PROPFIND", url, auth=auth,
+        headers={"Depth": "1", "Content-Type": "application/xml"},
+    )
+    r.raise_for_status()
+    # Extract <d:href> paths, skip the directory entry itself
+    hrefs = re.findall(r"<d:href>([^<]+)</d:href>", r.text)
+    files = []
+    for href in hrefs:
+        name = href.rstrip("/").split("/")[-1]
+        if name and not href.endswith(f"{remote_dir}/"):
+            files.append(name)
+    return files
+
+
+def _download(base_url, auth, remote_dir, filename, local_path):
+    r = requests.get(f"{base_url}/{remote_dir}/{filename}", auth=auth)
+    r.raise_for_status()
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    with open(local_path, "wb") as f:
+        f.write(r.content)
+    print(success(f"  {filename}"))
+
+
+def restore(claude=False, journal=False):
+    creds = _get_credentials()
+    base_url = _webdav_base(creds["url"], creds["user"])
+    auth = (creds["user"], creds["password"])
+
+    restore_claude = claude or not (claude or journal)
+    restore_journal = journal or not (claude or journal)
+
+    total = 0
+
+    if restore_claude:
+        print(info("Claude memory:"))
+        try:
+            files = _list_remote_files(base_url, auth, REMOTE_CLAUDE)
+        except requests.HTTPError as e:
+            print(error(f"  Failed to list remote files: {e}"))
+            files = []
+        for filename in files:
+            if filename == "CLAUDE.md":
+                local_path = CLAUDE_MD
+            else:
+                local_path = os.path.join(CLAUDE_MEMORY_DIR, filename)
+            _download(base_url, auth, REMOTE_CLAUDE, filename, local_path)
+            total += 1
+
+    if restore_journal:
+        print(info("Journal:"))
+        try:
+            files = _list_remote_files(base_url, auth, REMOTE_JOURNAL)
+        except requests.HTTPError as e:
+            print(error(f"  Failed to list remote files: {e}"))
+            files = []
+        for filename in files:
+            local_path = os.path.join(JOURNAL_DIR, filename)
+            _download(base_url, auth, REMOTE_JOURNAL, filename, local_path)
+            total += 1
+
+    print(success(f"\n{total} file(s) restored from Nextcloud."))
+
+
 def configure():
     print(info("Configure Nextcloud credentials (stored in system keyring)"))
     url = input("Nextcloud URL (e.g. https://cloud.example.com): ").strip()
