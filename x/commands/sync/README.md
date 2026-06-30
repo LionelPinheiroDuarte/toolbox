@@ -25,7 +25,18 @@ x sync --configure
 x sync              # sync everything
 x sync --claude     # Claude memory files only
 x sync --journal    # journal notes only
+x sync --restore    # restore everything from Nextcloud to local
+x sync --restore --claude   # restore Claude memory only
+x sync --restore --journal  # restore journal only
 ```
+
+**Restoring on a new machine:**
+```bash
+x sync --configure  # enter Nextcloud credentials
+x sync --restore    # downloads files to the correct local paths
+```
+
+Files are routed automatically: `CLAUDE.md` → `~/.claude/`, memory files → `~/.claude/projects/<user>/memory/`, journal → `~/documents/journal/`. Existing files are overwritten.
 
 **Dependencies:**
 - `requests` — WebDAV HTTP calls
