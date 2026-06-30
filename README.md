@@ -28,22 +28,23 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 
 ## Installation
 
-### 1. Clone the repository
+```bash
+curl -sSL https://raw.githubusercontent.com/LionelPinheiroDuarte/toolbox/main/install.sh | bash
+```
+
+The script checks for Python 3.8+, installs pipx if needed, and prints a setup summary with required env variables.
+
+### Per-command setup
+
+Some commands require additional setup — see each command's README linked above.
+
+### Development install
 
 ```bash
 git clone https://github.com/LionelPinheiroDuarte/toolbox.git
 cd toolbox
-```
-
-### 2. Install the package
-
-```bash
 pip install -e . --break-system-packages
 ```
-
-### 3. Per-command setup
-
-Some commands require additional setup — see each command's README linked above.
 
 ---
 
@@ -89,7 +90,7 @@ toolbox/
 - [x] `x sync` — sync Claude memory and journal notes to Nextcloud
 - [x] Gruvbox Dark color formatting
 - [ ] `x history` — browse past errors
-- [ ] `install.sh` — one-line installation script
+- [x] `install.sh` — one-line installation script
 
 ---
 
