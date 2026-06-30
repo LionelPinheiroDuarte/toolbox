@@ -15,5 +15,8 @@ dependencies = [
     "keyrings.alt",
 ]
 
+[tool.setuptools.packages.find]
+include = ["x*"]
+
 [project.scripts]
 x = "x.main:main"
