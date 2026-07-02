@@ -12,6 +12,8 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 | [`x notes`](x/commands/notes/README.md) | Browse journal notes with syntax highlighting |
 | [`x repos`](x/commands/repos/README.md) | Clone GitHub repos with optional filters |
 | [`x sync`](x/commands/sync/README.md) | Sync Claude memory and journal notes to Nextcloud |
+| `x setup` | Clone dotfiles and run the full Ansible playbook (`--short` for user-level only) |
+| `x dotfiles pull` | Pull latest changes from the dotfiles repo |
 
 ---
 
@@ -23,6 +25,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 - `gh` CLI (for `x repos`)
 - `OPENROUTER_API_KEY` env variable (for `x wtf`)
 - Nextcloud account + app password (for `x sync`)
+- `ansible-core` + `git` (for `x setup`)
 
 ---
 
@@ -66,6 +69,10 @@ toolbox/
 │   │   ├── sync/
 │   │   │   ├── __init__.py
 │   │   │   └── README.md
+│   │   ├── setup/
+│   │   │   └── __init__.py
+│   │   ├── dotfiles/
+│   │   │   └── __init__.py
 │   │   └── wtf/
 │   │       ├── __init__.py
 │   │       └── README.md
@@ -88,6 +95,8 @@ toolbox/
 - [x] `x notes` — browse journal notes with syntax highlighting
 - [x] `x repos` — clone GitHub repos with optional filters
 - [x] `x sync` — sync Claude memory and journal notes to Nextcloud
+- [x] `x setup` — provision a new machine from dotfiles + Ansible
+- [x] `x dotfiles pull` — pull latest dotfiles changes
 - [x] Gruvbox Dark color formatting
 - [ ] `x history` — browse past errors
 - [x] `install.sh` — one-line installation script
