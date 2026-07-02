@@ -6,6 +6,8 @@ from x.commands import wtf as wtf_cmd
 from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
 from x.commands import sync as sync_cmd
+from x.commands import setup as setup_cmd
+from x.commands import dotfiles as dotfiles_cmd
 
 @click.group()
 def cli():
@@ -54,6 +56,25 @@ def sync(claude, journal, do_configure, do_restore):
         sync_cmd.restore(claude=claude, journal=journal)
         return
     sync_cmd.run(claude=claude, journal=journal)
+
+
+@cli.command()
+@click.option("--short", is_flag=True, help="User-level only (dotfiles + toolbox, no sudo).")
+def setup(short):
+    """Clone or update dotfiles and run the Ansible playbook."""
+    setup_cmd.run(short=short)
+
+
+@cli.group()
+def dotfiles():
+    """Manage dotfiles repository."""
+    pass
+
+
+@dotfiles.command()
+def pull():
+    """Pull latest changes from the dotfiles repo."""
+    dotfiles_cmd.pull()
 
 
 def main():
