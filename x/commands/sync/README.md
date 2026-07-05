@@ -1,6 +1,6 @@
 # sync
 
-**What it does:** Uploads Claude memory files and journal Markdown notes to Nextcloud via WebDAV. Credentials are stored in the system keyring (never in plaintext).
+**What it does:** Uploads Claude memory files, journal Markdown notes and the CV project to Nextcloud via WebDAV. Credentials are stored in the system keyring (never in plaintext).
 
 ![x sync demo](../../../assets/sync.gif)
 
@@ -8,10 +8,13 @@
 - `~/.claude/CLAUDE.md`
 - `~/.claude/projects/<user>/memory/*.md`
 - `~/documents/journal/YYYY-MM-DD.md`
+- `~/documents/cv/*` (profile.yaml, template.tex, generated PDFs)
+- `~/.claude/agents/cv-generator.md` and `ats-advisor.md` (the CV agents)
 
 **Destinations on Nextcloud:**
 - `backups/claude-memory/`
 - `backups/journal/`
+- `backups/cv/` (+ `backups/cv/agents/`)
 
 **First-time setup:**
 ```bash
@@ -25,9 +28,11 @@ x sync --configure
 x sync              # sync everything
 x sync --claude     # Claude memory files only
 x sync --journal    # journal notes only
+x sync --cv         # CV project only (profile, template, PDFs, agents)
 x sync --restore    # restore everything from Nextcloud to local
 x sync --restore --claude   # restore Claude memory only
 x sync --restore --journal  # restore journal only
+x sync --restore --cv       # restore CV project only
 ```
 
 **Restoring on a new machine:**
@@ -36,7 +41,7 @@ x sync --configure  # enter Nextcloud credentials
 x sync --restore    # downloads files to the correct local paths
 ```
 
-Files are routed automatically: `CLAUDE.md` → `~/.claude/`, memory files → `~/.claude/projects/<user>/memory/`, journal → `~/documents/journal/`. Existing files are overwritten.
+Files are routed automatically: `CLAUDE.md` → `~/.claude/`, memory files → `~/.claude/projects/<user>/memory/`, journal → `~/documents/journal/`, CV files → `~/documents/cv/`, CV agents → `~/.claude/agents/`. Existing files are overwritten.
 
 **Dependencies:**
 - `requests` — WebDAV HTTP calls

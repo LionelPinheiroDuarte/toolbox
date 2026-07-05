@@ -13,9 +13,14 @@ _PROJECT_SLUG = _HOME.replace("/", "-")
 CLAUDE_MEMORY_DIR = os.path.join(_CLAUDE_DIR, "projects", _PROJECT_SLUG, "memory")
 CLAUDE_MD = os.path.join(_CLAUDE_DIR, "CLAUDE.md")
 JOURNAL_DIR = os.path.expanduser("~/documents/journal")
+CV_DIR = os.path.expanduser("~/documents/cv")
+CV_AGENTS_DIR = os.path.join(_CLAUDE_DIR, "agents")
+CV_AGENT_NAMES = ["cv-generator.md", "ats-advisor.md"]
 
 REMOTE_CLAUDE = "backups/claude-memory"
 REMOTE_JOURNAL = "backups/journal"
+REMOTE_CV = "backups/cv"
+REMOTE_CV_AGENTS = "backups/cv/agents"
 
 
 def _get_credentials():
@@ -68,6 +73,24 @@ def _journal_files():
     ])
 
 
+def _cv_files():
+    files = []
+    if os.path.isdir(CV_DIR):
+        for f in sorted(os.listdir(CV_DIR)):
+            path = os.path.join(CV_DIR, f)
+            if os.path.isfile(path):
+                files.append(path)
+    return files
+
+
+def _cv_agent_files():
+    return [
+        os.path.join(CV_AGENTS_DIR, name)
+        for name in CV_AGENT_NAMES
+        if os.path.exists(os.path.join(CV_AGENTS_DIR, name))
+    ]
+
+
 def _list_remote_files(base_url, auth, remote_dir):
     url = f"{base_url}/{remote_dir}/"
     r = requests.request(
@@ -75,12 +98,15 @@ def _list_remote_files(base_url, auth, remote_dir):
         headers={"Depth": "1", "Content-Type": "application/xml"},
     )
     r.raise_for_status()
-    # Extract <d:href> paths, skip the directory entry itself
+    # Extract <d:href> paths; collections end with "/" (the dir itself
+    # and any subdirectories), keep only plain files
     hrefs = re.findall(r"<d:href>([^<]+)</d:href>", r.text)
     files = []
     for href in hrefs:
-        name = href.rstrip("/").split("/")[-1]
-        if name and not href.endswith(f"{remote_dir}/"):
+        if href.endswith("/"):
+            continue
+        name = href.split("/")[-1]
+        if name:
             files.append(name)
     return files
 
@@ -94,13 +120,15 @@ def _download(base_url, auth, remote_dir, filename, local_path):
     print(success(f"  {filename}"))
 
 
-def restore(claude=False, journal=False):
+def restore(claude=False, journal=False, cv=False):
     creds = _get_credentials()
     base_url = _webdav_base(creds["url"], creds["user"])
     auth = (creds["user"], creds["password"])
 
-    restore_claude = claude or not (claude or journal)
-    restore_journal = journal or not (claude or journal)
+    all_sources = not (claude or journal or cv)
+    restore_claude = claude or all_sources
+    restore_journal = journal or all_sources
+    restore_cv = cv or all_sources
 
     total = 0
 
@@ -131,6 +159,22 @@ def restore(claude=False, journal=False):
             _download(base_url, auth, REMOTE_JOURNAL, filename, local_path)
             total += 1
 
+    if restore_cv:
+        print(info("CV:"))
+        for remote_dir, local_dir in [
+            (REMOTE_CV, CV_DIR),
+            (REMOTE_CV_AGENTS, CV_AGENTS_DIR),
+        ]:
+            try:
+                files = _list_remote_files(base_url, auth, remote_dir)
+            except requests.HTTPError as e:
+                print(error(f"  Failed to list remote files: {e}"))
+                files = []
+            for filename in files:
+                local_path = os.path.join(local_dir, filename)
+                _download(base_url, auth, remote_dir, filename, local_path)
+                total += 1
+
     print(success(f"\n{total} file(s) restored from Nextcloud."))
 
 
@@ -144,13 +188,15 @@ def configure():
     print(success("Credentials saved."))
 
 
-def run(claude=False, journal=False):
+def run(claude=False, journal=False, cv=False):
     creds = _get_credentials()
     base_url = _webdav_base(creds["url"], creds["user"])
     auth = (creds["user"], creds["password"])
 
-    sync_claude = claude or not (claude or journal)
-    sync_journal = journal or not (claude or journal)
+    all_sources = not (claude or journal or cv)
+    sync_claude = claude or all_sources
+    sync_journal = journal or all_sources
+    sync_cv = cv or all_sources
 
     total = 0
 
@@ -175,5 +221,23 @@ def run(claude=False, journal=False):
             for path in files:
                 _upload(base_url, auth, path, REMOTE_JOURNAL)
                 total += 1
+
+    if sync_cv:
+        print(info("CV:"))
+        files = _cv_files()
+        agent_files = _cv_agent_files()
+        if not (files or agent_files):
+            print(error("  No CV files found."))
+        else:
+            if files:
+                _ensure_remote_dir(base_url, auth, REMOTE_CV)
+                for path in files:
+                    _upload(base_url, auth, path, REMOTE_CV)
+                    total += 1
+            if agent_files:
+                _ensure_remote_dir(base_url, auth, REMOTE_CV_AGENTS)
+                for path in agent_files:
+                    _upload(base_url, auth, path, REMOTE_CV_AGENTS)
+                    total += 1
 
     print(success(f"\n{total} file(s) synced to Nextcloud."))
