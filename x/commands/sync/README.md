@@ -1,6 +1,6 @@
 # sync
 
-**What it does:** Uploads Claude memory files, journal Markdown notes and the CV project to Nextcloud via WebDAV. Credentials are stored in the system keyring (never in plaintext).
+**What it does:** Uploads Claude memory files, Claude skills, journal Markdown notes and the CV project to Nextcloud via WebDAV. Credentials are stored in the system keyring (never in plaintext).
 
 ![x sync demo](../../../assets/sync.gif)
 
