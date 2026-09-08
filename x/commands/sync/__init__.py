@@ -3,6 +3,7 @@ import re
 import getpass
 import keyring
 import requests
+from urllib.parse import urlparse, unquote
 from x.utils.colors import error, info, success, command
 
 SERVICE_NAME = "toolbox-nextcloud"
@@ -16,11 +17,13 @@ JOURNAL_DIR = os.path.expanduser("~/documents/journal")
 CV_DIR = os.path.expanduser("~/documents/cv")
 CV_AGENTS_DIR = os.path.join(_CLAUDE_DIR, "agents")
 CV_AGENT_NAMES = ["cv-generator.md", "ats-advisor.md"]
+SKILLS_DIR = os.path.join(_CLAUDE_DIR, "skills")
 
 REMOTE_CLAUDE = "backups/claude-memory"
 REMOTE_JOURNAL = "backups/journal"
 REMOTE_CV = "backups/cv"
 REMOTE_CV_AGENTS = "backups/cv/agents"
+REMOTE_SKILLS = "backups/skills"
 
 
 def _get_credentials():
@@ -91,6 +94,21 @@ def _cv_agent_files():
     ]
 
 
+def _skills_files():
+    """Return (local_path, remote_subdir) pairs for every file under
+    ~/.claude/skills, walked recursively so nested folders (e.g. references/)
+    are preserved on the remote."""
+    files = []
+    if not os.path.isdir(SKILLS_DIR):
+        return files
+    for root, _dirs, filenames in sorted(os.walk(SKILLS_DIR)):
+        rel_dir = os.path.relpath(root, SKILLS_DIR)
+        remote_dir = REMOTE_SKILLS if rel_dir == "." else f"{REMOTE_SKILLS}/{rel_dir}"
+        for f in sorted(filenames):
+            files.append((os.path.join(root, f), remote_dir))
+    return files
+
+
 def _list_remote_files(base_url, auth, remote_dir):
     url = f"{base_url}/{remote_dir}/"
     r = requests.request(
@@ -111,6 +129,33 @@ def _list_remote_files(base_url, auth, remote_dir):
     return files
 
 
+def _list_remote_tree(base_url, auth, remote_dir):
+    """Recursively list files under remote_dir. Returns (filename, remote_subdir)
+    pairs, where remote_subdir is the full remote path the file lives in."""
+    url = f"{base_url}/{remote_dir}/"
+    r = requests.request(
+        "PROPFIND", url, auth=auth,
+        headers={"Depth": "1", "Content-Type": "application/xml"},
+    )
+    r.raise_for_status()
+    hrefs = re.findall(r"<d:href>([^<]+)</d:href>", r.text)
+    self_path = urlparse(url).path.rstrip("/")
+    results = []
+    for href in hrefs:
+        href_path = unquote(href).rstrip("/")
+        if href_path == self_path:
+            continue
+        name = href_path.split("/")[-1]
+        if not name:
+            continue
+        if href.endswith("/"):
+            sub_remote = f"{remote_dir}/{name}"
+            results.extend(_list_remote_tree(base_url, auth, sub_remote))
+        else:
+            results.append((name, remote_dir))
+    return results
+
+
 def _download(base_url, auth, remote_dir, filename, local_path):
     r = requests.get(f"{base_url}/{remote_dir}/{filename}", auth=auth)
     r.raise_for_status()
@@ -120,15 +165,16 @@ def _download(base_url, auth, remote_dir, filename, local_path):
     print(success(f"  {filename}"))
 
 
-def restore(claude=False, journal=False, cv=False):
+def restore(claude=False, journal=False, cv=False, skills=False):
     creds = _get_credentials()
     base_url = _webdav_base(creds["url"], creds["user"])
     auth = (creds["user"], creds["password"])
 
-    all_sources = not (claude or journal or cv)
+    all_sources = not (claude or journal or cv or skills)
     restore_claude = claude or all_sources
     restore_journal = journal or all_sources
     restore_cv = cv or all_sources
+    restore_skills = skills or all_sources
 
     total = 0
 
@@ -175,6 +221,20 @@ def restore(claude=False, journal=False, cv=False):
                 _download(base_url, auth, remote_dir, filename, local_path)
                 total += 1
 
+    if restore_skills:
+        print(info("Skills:"))
+        try:
+            entries = _list_remote_tree(base_url, auth, REMOTE_SKILLS)
+        except requests.HTTPError as e:
+            print(error(f"  Failed to list remote files: {e}"))
+            entries = []
+        for filename, remote_dir in entries:
+            rel_dir = os.path.relpath(remote_dir, REMOTE_SKILLS)
+            local_dir = SKILLS_DIR if rel_dir == "." else os.path.join(SKILLS_DIR, rel_dir)
+            local_path = os.path.join(local_dir, filename)
+            _download(base_url, auth, remote_dir, filename, local_path)
+            total += 1
+
     print(success(f"\n{total} file(s) restored from Nextcloud."))
 
 
@@ -188,15 +248,16 @@ def configure():
     print(success("Credentials saved."))
 
 
-def run(claude=False, journal=False, cv=False):
+def run(claude=False, journal=False, cv=False, skills=False):
     creds = _get_credentials()
     base_url = _webdav_base(creds["url"], creds["user"])
     auth = (creds["user"], creds["password"])
 
-    all_sources = not (claude or journal or cv)
+    all_sources = not (claude or journal or cv or skills)
     sync_claude = claude or all_sources
     sync_journal = journal or all_sources
     sync_cv = cv or all_sources
+    sync_skills = skills or all_sources
 
     total = 0
 
@@ -239,5 +300,19 @@ def run(claude=False, journal=False, cv=False):
                 for path in agent_files:
                     _upload(base_url, auth, path, REMOTE_CV_AGENTS)
                     total += 1
+
+    if sync_skills:
+        print(info("Skills:"))
+        files = _skills_files()
+        if not files:
+            print(error("  No skills found."))
+        else:
+            seen_dirs = set()
+            for path, remote_dir in files:
+                if remote_dir not in seen_dirs:
+                    _ensure_remote_dir(base_url, auth, remote_dir)
+                    seen_dirs.add(remote_dir)
+                _upload(base_url, auth, path, remote_dir)
+                total += 1
 
     print(success(f"\n{total} file(s) synced to Nextcloud."))

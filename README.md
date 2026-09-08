@@ -11,7 +11,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 | [`x wtf`](x/commands/wtf/README.md) | Analyze the last failed shell command via AI |
 | [`x notes`](x/commands/notes/README.md) | Browse journal notes with syntax highlighting |
 | [`x repos`](x/commands/repos/README.md) | Clone GitHub repos with optional filters |
-| [`x sync`](x/commands/sync/README.md) | Sync Claude memory, journal notes and CV project to Nextcloud |
+| [`x sync`](x/commands/sync/README.md) | Sync Claude memory, skills, journal notes and CV project to Nextcloud |
 | `x setup` | Clone dotfiles and run the full Ansible playbook (`--short` for user-level only) |
 | `x dotfiles pull` | Pull latest changes from the dotfiles repo |
 
@@ -94,7 +94,7 @@ toolbox/
 - [x] `x wtf` — capture and explain last failed command via AI (OpenRouter)
 - [x] `x notes` — browse journal notes with syntax highlighting
 - [x] `x repos` — clone GitHub repos with optional filters
-- [x] `x sync` — sync Claude memory, journal notes and CV project to Nextcloud
+- [x] `x sync` — sync Claude memory, skills, journal notes and CV project to Nextcloud
 - [x] `x setup` — provision a new machine from dotfiles + Ansible
 - [x] `x dotfiles pull` — pull latest dotfiles changes
 - [x] Gruvbox Dark color formatting

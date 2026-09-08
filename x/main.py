@@ -46,17 +46,18 @@ def repos(single, language, all_repos, dest):
 @click.option("--claude", is_flag=True, help="Sync Claude memory files only.")
 @click.option("--journal", is_flag=True, help="Sync journal notes only.")
 @click.option("--cv", is_flag=True, help="Sync CV project (profile, template, PDFs, agents) only.")
+@click.option("--skills", is_flag=True, help="Sync Claude skills (~/.claude/skills) only.")
 @click.option("--configure", "do_configure", is_flag=True, help="Set up Nextcloud credentials.")
 @click.option("--restore", "do_restore", is_flag=True, help="Restore files from Nextcloud to local machine.")
-def sync(claude, journal, cv, do_configure, do_restore):
-    """Sync Claude memory, journal notes and CV project to Nextcloud."""
+def sync(claude, journal, cv, skills, do_configure, do_restore):
+    """Sync Claude memory, skills, journal notes and CV project to Nextcloud."""
     if do_configure:
         sync_cmd.configure()
         return
     if do_restore:
-        sync_cmd.restore(claude=claude, journal=journal, cv=cv)
+        sync_cmd.restore(claude=claude, journal=journal, cv=cv, skills=skills)
         return
-    sync_cmd.run(claude=claude, journal=journal, cv=cv)
+    sync_cmd.run(claude=claude, journal=journal, cv=cv, skills=skills)
 
 
 @cli.command()
