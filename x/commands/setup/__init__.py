@@ -1,7 +1,8 @@
 import os
 import subprocess
 
-from x.utils.colors import error, info, success
+from x.commands.repos import pull_repo, FAILED, SKIPPED
+from x.utils.colors import error, info, success, warning
 
 DOTFILES_REPO = "https://github.com/LionelPinheiroDuarte/dotfiles.git"
 DOTFILES_DIR = os.path.expanduser("~/repos/github/dotfiles")
@@ -16,10 +17,11 @@ def run(short=False):
             raise SystemExit(1)
     else:
         print(info("Updating dotfiles..."))
-        result = subprocess.run(["git", "-C", DOTFILES_DIR, "pull"])
-        if result.returncode != 0:
-            print(error("Pull failed."))
+        status, _, message = pull_repo(DOTFILES_DIR)
+        if status == FAILED:
+            print(error(f"Pull failed: {message}"))
             raise SystemExit(1)
+        print(warning(message) if status == SKIPPED else success(message))
 
     cmd = ["ansible-playbook", "ansible/playbook.yml", "-i", "ansible/inventory.ini"]
     if short:

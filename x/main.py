@@ -7,7 +7,6 @@ from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
 from x.commands import sync as sync_cmd
 from x.commands import setup as setup_cmd
-from x.commands import dotfiles as dotfiles_cmd
 
 @click.group()
 def cli():
@@ -30,17 +29,39 @@ def notes(last, tasks):
     """Show today's journal note, last entry, or task file."""
     notes_cmd.run(last=last, tasks=tasks)
 
-@cli.command()
-@click.option("--single", "-s", default=None, help="Clone a single repo by name.")
+@cli.group()
+def repos():
+    """Clone, pull or push my GitHub repos."""
+    pass
+
+dir_option = click.option("--dir", "-d", "directory", default=repos_cmd.DEFAULT_DIR, show_default=True,
+                          help="Directory holding the repos ($GITHUB).")
+
+@repos.command()
+@click.argument("name", required=False)
 @click.option("--language", "-l", default=None, help="Clone all repos matching a language.")
 @click.option("--all", "all_repos", is_flag=True, help="Clone all repos.")
-@click.option("--dest", "-d", default=repos_cmd.DEFAULT_DEST, show_default=True, help="Destination directory.")
-def repos(single, language, all_repos, dest):
-    """Clone GitHub repos with optional filters."""
-    if not any([single, language, all_repos]):
-        import click as _click
-        raise _click.UsageError("Specify --single, --language, or --all.")
-    repos_cmd.run(single=single, language=language, all_repos=all_repos, dest=dest)
+@dir_option
+def clone(name, language, all_repos, directory):
+    """Clone a repo by NAME (or owner/name), by language, or all of them."""
+    if not any([name, language, all_repos]):
+        raise click.UsageError("Specify NAME, --language, or --all.")
+    repos_cmd.clone(name=name, language=language, all_repos=all_repos, directory=directory)
+
+@repos.command()
+@click.argument("name", required=False)
+@dir_option
+def pull(name, directory):
+    """Fast-forward one repo, or all of them if NAME is omitted."""
+    repos_cmd.pull(name=name, directory=directory)
+
+@repos.command()
+@click.argument("name", required=False)
+@click.option("--yes", "-y", is_flag=True, help="Push all without confirmation.")
+@dir_option
+def push(name, yes, directory):
+    """Push one repo, or all of them (after confirmation) if NAME is omitted."""
+    repos_cmd.push(name=name, directory=directory, yes=yes)
 
 @cli.command()
 @click.option("--claude", is_flag=True, help="Sync Claude memory files only.")
@@ -65,18 +86,6 @@ def sync(claude, journal, cv, skills, do_configure, do_restore):
 def setup(short):
     """Clone or update dotfiles and run the Ansible playbook."""
     setup_cmd.run(short=short)
-
-
-@cli.group()
-def dotfiles():
-    """Manage dotfiles repository."""
-    pass
-
-
-@dotfiles.command()
-def pull():
-    """Pull latest changes from the dotfiles repo."""
-    dotfiles_cmd.pull()
 
 
 def main():

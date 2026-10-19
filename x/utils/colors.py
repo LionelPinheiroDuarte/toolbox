@@ -19,3 +19,6 @@ def success(text):
 
 def info(text):
     return f"{BLUE}{text}{RESET}"
+
+def warning(text):
+    return f"{YELLOW}{text}{RESET}"
