@@ -1,7 +1,6 @@
 import sys
 import click
 
-from x.commands import hello as hello_cmd
 from x.commands import wtf as wtf_cmd
 from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
@@ -11,11 +10,6 @@ from x.commands import setup as setup_cmd
 @click.group()
 def cli():
     pass
-
-@cli.command()
-def hello():
-    """Say hello."""
-    hello_cmd.run()
 
 @cli.command()
 def wtf():
