@@ -30,3 +30,6 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Vim swap files
+*.sw[op]
