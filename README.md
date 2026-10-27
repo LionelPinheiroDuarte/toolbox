@@ -9,7 +9,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 | Command | Description |
 |---------|-------------|
 | [`x wtf`](x/commands/wtf/README.md) | Analyze the last failed shell command via AI |
-| [`x notes`](x/commands/notes/README.md) | Browse journal notes with syntax highlighting |
+| [`x notes`](x/commands/notes/README.md) | Browse or edit journal notes and the task file |
 | [`x repos`](x/commands/repos/README.md) | Clone, pull or push my GitHub repos — one or all |
 | [`x sync`](x/commands/sync/README.md) | Sync Claude memory, skills, journal notes and CV project to Nextcloud |
 | `x setup` | Clone dotfiles and run the full Ansible playbook (`--short` for user-level only) |

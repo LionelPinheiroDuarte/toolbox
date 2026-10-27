@@ -19,9 +19,10 @@ def wtf():
 @cli.command()
 @click.option("--last", "-l", is_flag=True, help="Show the last created note.")
 @click.option("--tasks", "-t", is_flag=True, help="Show the task file.")
-def notes(last, tasks):
+@click.option("--edit", "-e", is_flag=True, help="Open the file in $EDITOR instead of showing it.")
+def notes(last, tasks, edit):
     """Show today's journal note, last entry, or task file."""
-    notes_cmd.run(last=last, tasks=tasks)
+    notes_cmd.run(last=last, tasks=tasks, edit=edit)
 
 @cli.group()
 def repos():
