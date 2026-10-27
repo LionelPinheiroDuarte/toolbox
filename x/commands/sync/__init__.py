@@ -72,7 +72,8 @@ def _journal_files():
     return sorted([
         os.path.join(JOURNAL_DIR, f)
         for f in os.listdir(JOURNAL_DIR)
-        if re.match(r"^\d{4}-\d{2}-\d{2}\.md$", f)
+        # Dated notes plus the task file, so `x notes -t` works on every machine.
+        if re.match(r"^\d{4}-\d{2}-\d{2}\.md$", f) or f == "tasks.md"
     ])
 
 
