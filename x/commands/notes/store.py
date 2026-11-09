@@ -127,6 +127,8 @@ def new_note(query, root=None, today=None):
     root = root or JOURNAL_DIR
     today = today or date.today()
     query = (query or "").strip()
+    if query.lower().endswith(".md"):  # a file name typed in full
+        query = query[:-3].strip()
     slug = slugify(query)
     if not slug:
         path = os.path.join(root, f"{today.isoformat()}.md")

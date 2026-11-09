@@ -176,6 +176,22 @@ def trash_path(path, self_cmd):
           f"✓ {name} est dans la corbeille (~/.local/share/Trash/files)")
 
 
+NEW_PROMPT = "nouvelle note ❯ "
+NEW_GHOST = "nom du fichier · esc pour annuler"
+SEARCH_MODE = "change-prompt(❯ )+enable-search+clear-query+change-ghost(chercher une note)"
+
+
+def _enter(self_cmd, reload):
+    """The shell behind enter, which prints the fzf actions to run: in the
+    name field, create the note named by the query (read from $FZF_QUERY
+    by the editor's shell, so a ")" in the name can't break the action) and
+    go back to searching; in the list, edit the note under the cursor."""
+    create = f"execute({self_cmd} --new-note \\\"\\$FZF_QUERY\\\")+{SEARCH_MODE}+{reload}"
+    edit = f"execute({self_cmd} --open-path {{3}})+change-header()+{reload}"
+    return (f"if [ \"$FZF_PROMPT\" = '{NEW_PROMPT}' ]; then echo \"{create}\"; "
+            f"elif [ -n {{3}} ]; then echo \"{edit}\"; fi")
+
+
 def _fzf_version():
     try:
         out = subprocess.run(["fzf", "--version"], capture_output=True, text=True).stdout
@@ -207,7 +223,7 @@ def browse():
     headers = len(GROUPS)
     footer = (f"{KEY} ⏎ {OFF} ouvrir   {KEY} ^O {OFF} fenêtre tmux   {KEY} ^N {OFF} nouvelle   "
               f"{KEY} ^X {OFF} corbeille   {KEY} ^/ {OFF} aperçu\n"
-              f"{DIM}^N sans texte : note du jour · avec texte : notes/<texte>.md{OFF}")
+              f"{DIM}^N : nom du fichier, créé dans notes/ · vide : note du jour{OFF}")
     preview = ("[ -s {3} ] && batcat --color=always --style=plain --language=md "
                "--terminal-width=$FZF_PREVIEW_COLUMNS {3} "
                f"|| printf '{DIM}%s{OFF}\\n' \"$(basename {{3}}) est vide — ⏎ pour l'écrire\"")
@@ -238,9 +254,15 @@ def browse():
         "--bind", "result:transform([ -n {3} ] || echo down)",
         "--bind", "down:down+transform([ -n {3} ] || echo down)",
         "--bind", "up:up+transform([ -n {3} ] || { [ $FZF_POS -le 1 ] && echo down || echo up; })",
-        "--bind", f"enter:execute({self_cmd} --open-path {{3}})+change-header()+{reload}",
+        # ctrl-n turns the input into a field for the new note's name (the
+        # prompt says which mode is on): enter creates, esc goes back
+        "--bind", f"ctrl-n:change-prompt({NEW_PROMPT})+disable-search+clear-query"
+                  f"+change-ghost({NEW_GHOST})+change-header()",
+        # (transform: to the end of the string, as their scripts hold ")")
+        "--bind", f"enter:transform:{_enter(self_cmd, reload)}",
+        "--bind", f"esc:transform:[ \"$FZF_PROMPT\" = '{NEW_PROMPT}' ] "
+                  f"&& echo '{SEARCH_MODE}' || echo abort",
         "--bind", f"ctrl-o:become({self_cmd} --window-path {{3}})",
-        "--bind", f"ctrl-n:execute({self_cmd} --new-note {{q}})+clear-query+change-header()+{reload}",
         "--bind", f"ctrl-x:transform({self_cmd} --trash-path {{3}})",
         "--bind", "ctrl-/:toggle-preview",
     ]

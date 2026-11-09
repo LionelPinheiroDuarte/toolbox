@@ -129,6 +129,13 @@ def test_new_note_header_reads_back(journal):
     assert store.read_header(path)[:3] == ("Docker buildx cache", "", "")
 
 
+def test_new_note_takes_a_full_file_name(journal):
+    path = store.new_note("Helm (values) tips.md", str(journal), date(2026, 11, 9))
+
+    assert path == str(journal / "notes" / "helm-values-tips.md")
+    assert open(path).readline() == "# Helm (values) tips\n"
+
+
 @pytest.mark.parametrize("query", ["", "   ", "???"])
 def test_new_note_without_a_usable_query_is_today(journal, query):
     path = store.new_note(query, str(journal), date(2026, 11, 9))

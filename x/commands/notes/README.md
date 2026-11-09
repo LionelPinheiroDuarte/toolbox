@@ -25,7 +25,7 @@ project and tags, even where the row cuts them.
 |-----|--------|
 | `enter` | Edit the note in `$VISUAL` / `$EDITOR`, then back to the list |
 | `ctrl-o` | Edit it in a new tmux window `note:<name>`, the popup closes |
-| `ctrl-n` | Empty search: today's note. Otherwise `notes/<search as slug>.md`, with the journal agent's header. An existing note is opened, never overwritten |
+| `ctrl-n` | Turns the input into a field for the new note's name: `enter` creates `notes/<name as slug>.md` (a trailing `.md` is fine) with the journal agent's header and opens it, an empty name opens today's note, `esc` goes back to the search. An existing note is opened, never overwritten |
 | `ctrl-x` | Move the note to the desktop trash with `gio trash` (`~/.local/share/Trash/files/`, restorable from the file manager). `tasks.md` is never trashed |
 | `ctrl-/` | Show or hide the preview |
 
@@ -61,7 +61,8 @@ VISUAL="echo EDIT" x notes -t -e   # should print EDIT …/tasks.md
 # browser, on a copy of the journal
 cp -r ~/documents/journal /tmp/journal-copy
 X_JOURNAL_DIR=/tmp/journal-copy x notes --browse
-#   type a word, ctrl-n          → vi on notes/<word>.md, then the note in NOTES
+#   ctrl-n, a name, enter        → vi on notes/<name>.md, then the note in NOTES
+#   ctrl-n, esc                  → back to the search, popup still open
 #   enter on a note, :q          → back on the same note
 #   ctrl-x on tasks.md           → "tasks.md ne part jamais à la corbeille"
 #   ctrl-o (inside tmux)         → a new window note:<name>, popup closed
