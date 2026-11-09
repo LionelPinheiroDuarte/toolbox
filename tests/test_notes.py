@@ -141,6 +141,7 @@ def test_new_note_without_a_usable_query_is_today(journal, query):
     path = store.new_note(query, str(journal), date(2026, 11, 9))
 
     assert path == str(journal / "2026-11-09.md")
+    assert open(path).read() == "# 2026-11-09\n\n"
 
 
 def test_new_note_never_overwrites(journal):
@@ -160,13 +161,57 @@ def test_new_note_creates_the_notes_folder(tmp_path):
     assert os.path.isfile(path)
 
 
-def test_ensure_tasks_creates_it_empty_and_keeps_it_after(journal):
-    path = store.ensure_tasks(str(journal))
-    assert open(path).read() == ""
+# --- never a blank screen ------------------------------------------------
 
-    _write(journal / "tasks.md", "- [ ] something\n")
-    store.ensure_tasks(str(journal))
-    assert (journal / "tasks.md").read_text() == "- [ ] something\n"
+@pytest.mark.parametrize("name, heading", [
+    ("tasks.md", "# Tasks\n\n"),
+    ("2026-11-09.md", "# 2026-11-09\n\n"),
+])
+def test_prepare_heads_a_missing_or_empty_note(journal, name, heading):
+    missing = journal / name
+    assert store.prepare(str(missing), str(journal)) is True
+    assert missing.read_text() == heading
+
+    _write(missing, "")  # 0 bytes, as left by an earlier version
+    assert store.prepare(str(missing), str(journal)) is True
+    assert missing.read_text() == heading
+
+
+def test_prepare_leaves_written_notes_alone(journal):
+    tasks = _write(journal / "tasks.md", "- [ ] something\n")
+
+    assert store.prepare(str(tasks), str(journal)) is False
+    assert tasks.read_text() == "- [ ] something\n"
+
+
+def test_prepare_only_heads_tasks_and_dated_notes(journal):
+    topic = _write(journal / "notes" / "2026-11-09.md", "")  # dated name, wrong folder
+
+    assert store.prepare(str(topic), str(journal)) is False
+    assert store.prepare(str(journal / "notes" / "other.md"), str(journal)) is False
+    assert topic.read_text() == ""
+    assert not (journal / "notes" / "other.md").exists()
+
+
+def test_a_dated_note_with_only_its_heading_has_no_title(journal):
+    store.new_note("", str(journal), date(2026, 11, 9))
+
+    dated = store.list_notes(str(journal))[1]
+
+    assert dated.title == ""
+    assert "(vide)" in _plain(browse.row(dated, 60))
+
+
+@pytest.mark.parametrize("editor, at_end, argv", [
+    ("vi", True, ["vi", "+", "/n.md"]),
+    ("vim -u NONE", True, ["vim", "-u", "NONE", "+", "/n.md"]),
+    ("vi", False, ["vi", "/n.md"]),
+    ("code --wait", True, ["code", "--wait", "/n.md"]),  # "+" is vi's
+])
+def test_editor_opens_vi_at_the_end_only_when_asked(monkeypatch, editor, at_end, argv):
+    monkeypatch.setenv("VISUAL", editor)
+
+    assert browse._editor_argv("/n.md", at_end) == argv
 
 
 # --- trashing -------------------------------------------------------------

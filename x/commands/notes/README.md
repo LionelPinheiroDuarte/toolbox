@@ -29,7 +29,10 @@ project and tags, even where the row cuts them.
 | `ctrl-x` | Move the note to the desktop trash with `gio trash` (`~/.local/share/Trash/files/`, restorable from the file manager). `tasks.md` is never trashed |
 | `ctrl-/` | Show or hide the preview |
 
-`tasks.md` is listed before it exists and created empty the first time it is opened.
+`tasks.md` is listed before it exists. When it or a dated note is opened missing or empty, it
+first gets a heading (`# Tasks`, `# 2026-11-09`) and vi opens below it: an editor on a
+0-byte file can look like a blank, frozen screen. A dated note with nothing but its heading
+is listed as *(vide)*.
 
 In tmux (dotfiles' `.tmux.conf`), `prefix N` opens it in a popup:
 

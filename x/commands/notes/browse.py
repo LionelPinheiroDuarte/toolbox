@@ -90,10 +90,11 @@ def row(note, width, now=None):
         return f"{text}{' ' * max(pad, 1)}{DIM}{state}{OFF}  {DIM}{age}{OFF}"
     if note.kind == "dated":
         lead = f"{note.day.isoformat()} {DAYS[note.day.weekday()]}  "
-        title = _cut(note.title, avail - len(lead))
+        title = _cut(note.title or "(vide)", avail - len(lead))
         pad = avail - len(lead) - len(title)
+        shown = title if note.title else f"{DIM}{title}{OFF}"
         return (f"{YLW}{note.day.isoformat()}{OFF} {DIM}{DAYS[note.day.weekday()]}{OFF}  "
-                f"{title}{' ' * max(pad, 0)}  {DIM}{age}{OFF}")
+                f"{shown}{' ' * max(pad, 0)}  {DIM}{age}{OFF}")
     meta = " · ".join(x for x in (note.project, note.tags) if x)
     # the title comes first: project and tags get at most 40% of the row
     meta = _cut(meta, min(len(meta), avail * 2 // 5))
@@ -122,18 +123,23 @@ def entries(root=None, width=None, now=None):
     return lines
 
 
-def _editor_argv(path):
-    # $VISUAL then $EDITOR, as git does; the value may carry arguments
-    editor = os.environ.get("VISUAL") or os.environ.get("EDITOR") or "vi"
-    return [*shlex.split(editor), path]
+VI_LIKE = {"vi", "vim", "nvim", "view", "vim.basic", "vim.tiny"}
+
+
+def _editor_argv(path, at_end=False):
+    """$VISUAL then $EDITOR, as git does; the value may carry arguments.
+    at_end: on the last line, ready to write under a fresh heading (vi's
+    "+"; other editors open at the top)."""
+    editor = shlex.split(os.environ.get("VISUAL") or os.environ.get("EDITOR") or "vi")
+    if at_end and os.path.basename(editor[0]) in VI_LIKE:
+        editor.append("+")
+    return [*editor, path]
 
 
 def open_path(path):
     if not path:
         return
-    if os.path.realpath(path) == os.path.realpath(store.tasks_path()):
-        store.ensure_tasks()
-    subprocess.run(_editor_argv(path))
+    subprocess.run(_editor_argv(path, at_end=store.prepare(path)))
 
 
 def open_window(path):
@@ -141,18 +147,17 @@ def open_window(path):
     just the editor here."""
     if not path:
         return
-    if os.path.realpath(path) == os.path.realpath(store.tasks_path()):
-        store.ensure_tasks()
+    argv = _editor_argv(path, at_end=store.prepare(path))
     if not os.environ.get("TMUX"):
-        subprocess.run(_editor_argv(path))
+        subprocess.run(argv)
         return
     name = os.path.splitext(os.path.basename(path))[0]
     subprocess.run(["tmux", "new-window", "-n", f"note:{name}",
-                    "-c", os.path.dirname(path), *_editor_argv(path)])
+                    "-c", os.path.dirname(path), *argv])
 
 
 def new_note(query):
-    subprocess.run(_editor_argv(store.new_note(query)))
+    subprocess.run(_editor_argv(store.new_note(query), at_end=True))
 
 
 def trash_path(path, self_cmd):

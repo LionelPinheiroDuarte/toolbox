@@ -95,8 +95,8 @@ def list_notes(root=None):
             continue
         # a daily report's H1 only repeats the date: its summary says more
         title, _, _, summary = read_header(path)
-        if not title or title.startswith("Daily Report"):
-            title = summary or title
+        if not title or title.startswith("Daily Report") or title == m.group(1):
+            title = summary  # "" for a note with no text yet: shown as (vide)
         dated.append(Note("dated", path, title, day=day, mtime=os.path.getmtime(path)))
     notes += sorted(dated, key=lambda n: n.day, reverse=True)
 
@@ -132,24 +132,36 @@ def new_note(query, root=None, today=None):
     slug = slugify(query)
     if not slug:
         path = os.path.join(root, f"{today.isoformat()}.md")
-        content = ""
+        prepare(path, root)
+        return path
+    path = os.path.join(root, NOTES_SUBDIR, f"{slug}.md")
+    if not os.path.exists(path):
+        _write(path, f"# {query}\n\n**Date:** {today.isoformat()} | **Project:** | **Tags:**\n\n")
+    return path
+
+
+def _write(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+def prepare(path, root=None):
+    """Before a note is opened: give the task file or a dated note a heading
+    when it is missing or empty (0 bytes), so the editor never opens on a
+    blank screen that looks like a hang. True when it wrote one."""
+    root = root or JOURNAL_DIR
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        return False
+    name = os.path.basename(path)
+    if os.path.realpath(path) == os.path.realpath(tasks_path(root)):
+        heading = "# Tasks"
+    elif DATED.match(name) and os.path.realpath(os.path.dirname(path)) == os.path.realpath(root):
+        heading = f"# {name[:-3]}"
     else:
-        path = os.path.join(root, NOTES_SUBDIR, f"{slug}.md")
-        content = f"# {query}\n\n**Date:** {today.isoformat()} | **Project:** | **Tags:**\n\n"
-    if not os.path.exists(path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-    return path
-
-
-def ensure_tasks(root=None):
-    """tasks.md, created empty on first open."""
-    path = tasks_path(root)
-    if not os.path.exists(path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        open(path, "a").close()
-    return path
+        return False
+    _write(path, f"{heading}\n\n")
+    return True
 
 
 class TrashRefused(Exception):
