@@ -186,6 +186,26 @@ NEW_GHOST = "nom du fichier · esc pour annuler"
 SEARCH_MODE = "change-prompt(❯ )+enable-search+clear-query+change-ghost(chercher une note)"
 
 
+# moving down past a header (empty {3}) goes one more down; up, one more
+# up, except from the top line, which is a header: then back down
+_PAST_DOWN = "transform([ -n {3} ] || echo down)"
+_PAST_UP = "transform([ -n {3} ] || { [ $FZF_POS -le 1 ] && echo down || echo up; })"
+
+
+def _skip_headers():
+    """--bind options so that no key leaves the cursor on a header line:
+    the arrows, fzf's own ctrl-j/k/p for them, the pages, home and end."""
+    moves = {
+        "down": "down", "ctrl-j": "down", "up": "up", "ctrl-k": "up", "ctrl-p": "up",
+        "page-down": "page-down", "page-up": "page-up", "home": "first", "end": "last",
+    }
+    opts = []
+    for key, action in moves.items():
+        after = _PAST_UP if action in ("up", "page-up", "last") else _PAST_DOWN
+        opts += ["--bind", f"{key}:{action}+{after}"]
+    return opts
+
+
 def _enter(self_cmd, reload):
     """The shell behind enter, which prints the fzf actions to run: in the
     name field, create the note named by the query (read from $FZF_QUERY
@@ -257,8 +277,7 @@ def browse():
         # the cursor never rests on a header line (empty {3})
         "--bind", "change:first+change-header()",
         "--bind", "result:transform([ -n {3} ] || echo down)",
-        "--bind", "down:down+transform([ -n {3} ] || echo down)",
-        "--bind", "up:up+transform([ -n {3} ] || { [ $FZF_POS -le 1 ] && echo down || echo up; })",
+        *_skip_headers(),
         # ctrl-n turns the input into a field for the new note's name (the
         # prompt says which mode is on): enter creates, esc goes back
         "--bind", f"ctrl-n:change-prompt({NEW_PROMPT})+disable-search+clear-query"
