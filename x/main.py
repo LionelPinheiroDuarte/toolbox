@@ -1,7 +1,6 @@
 import sys
 import click
 
-from x.commands import wtf as wtf_cmd
 from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
 from x.commands import sync as sync_cmd
@@ -14,6 +13,9 @@ def cli():
 @cli.command()
 def wtf():
     """Analyze the last failed command."""
+    # imported here: openai alone takes most of x's start-up time, and the
+    # other commands (some called by fzf on every key) don't need it
+    from x.commands import wtf as wtf_cmd
     wtf_cmd.run()
 
 @cli.command()
