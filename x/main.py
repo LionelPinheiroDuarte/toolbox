@@ -1,7 +1,6 @@
 import sys
 import click
 
-from x.commands import wtf as wtf_cmd
 from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
 from x.commands import sync as sync_cmd
@@ -14,14 +13,40 @@ def cli():
 @cli.command()
 def wtf():
     """Analyze the last failed command."""
+    # imported here: openai alone takes most of x's start-up time, and the
+    # other commands (some called by fzf on every key) don't need it
+    from x.commands import wtf as wtf_cmd
     wtf_cmd.run()
 
 @cli.command()
 @click.option("--last", "-l", is_flag=True, help="Show the last created note.")
 @click.option("--tasks", "-t", is_flag=True, help="Show the task file.")
 @click.option("--edit", "-e", is_flag=True, help="Open the file in $EDITOR instead of showing it.")
-def notes(last, tasks, edit):
-    """Show today's journal note, last entry, or task file."""
+@click.option("--browse", "-b", is_flag=True, help="Browse, open, create and trash notes in fzf.")
+# called back by fzf from --browse (see x/commands/notes/browse.py)
+@click.option("--list-entries", is_flag=True, hidden=True)
+@click.option("--open-path", hidden=True)
+@click.option("--window-path", hidden=True)
+@click.option("--new-note", hidden=True)
+@click.option("--trash-path", hidden=True)
+def notes(last, tasks, edit, browse, list_entries, open_path, window_path, new_note, trash_path):
+    """Show today's journal note, last entry, or task file; or browse them all."""
+    if any(x is not None for x in (open_path, window_path, new_note, trash_path)) \
+            or browse or list_entries:
+        from x.commands.notes import browse as browse_cmd
+        if list_entries:
+            print("\n".join(browse_cmd.entries()))
+        elif open_path is not None:
+            browse_cmd.open_path(open_path)
+        elif window_path is not None:
+            browse_cmd.open_window(window_path)
+        elif new_note is not None:
+            browse_cmd.new_note(new_note)
+        elif trash_path is not None:
+            browse_cmd.trash_path(trash_path, browse_cmd.self_command())
+        else:
+            browse_cmd.browse()
+        return
     notes_cmd.run(last=last, tasks=tasks, edit=edit)
 
 @cli.group()

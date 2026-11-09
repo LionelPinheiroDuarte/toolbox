@@ -7,14 +7,15 @@
 **Sources synced:**
 - `~/.claude/CLAUDE.md`
 - `~/.claude/projects/<user>/memory/*.md`
-- `~/documents/journal/YYYY-MM-DD.md`
+- `~/documents/journal/YYYY-MM-DD.md` and `tasks.md`
+- `~/documents/journal/notes/*.md` (topic notes)
 - `~/documents/cv/*` (profile.yaml, template.tex, generated PDFs)
 - `~/.claude/agents/cv-generator.md` and `ats-advisor.md` (the CV agents)
 - `~/.claude/skills/**` (recursive — skill folders can contain subdirectories like `references/`)
 
 **Destinations on Nextcloud:**
 - `backups/claude-memory/`
-- `backups/journal/`
+- `backups/journal/` (+ `backups/journal/notes/`)
 - `backups/cv/` (+ `backups/cv/agents/`)
 - `backups/skills/` (mirrors the local folder structure)
 
@@ -45,7 +46,7 @@ x sync --configure  # enter Nextcloud credentials
 x sync --restore    # downloads files to the correct local paths
 ```
 
-Files are routed automatically: `CLAUDE.md` → `~/.claude/`, memory files → `~/.claude/projects/<user>/memory/`, journal → `~/documents/journal/`, CV files → `~/documents/cv/`, CV agents → `~/.claude/agents/`, skills → `~/.claude/skills/` (subfolder structure preserved). Existing files are overwritten.
+Files are routed automatically: `CLAUDE.md` → `~/.claude/`, memory files → `~/.claude/projects/<user>/memory/`, journal → `~/documents/journal/` (topic notes → `notes/`), CV files → `~/documents/cv/`, CV agents → `~/.claude/agents/`, skills → `~/.claude/skills/` (subfolder structure preserved). Existing files are overwritten.
 
 **Dependencies:**
 - `requests` — WebDAV HTTP calls
@@ -55,4 +56,11 @@ Files are routed automatically: `CLAUDE.md` → `~/.claude/`, memory files → `
 ```bash
 x sync --configure   # enter real or dummy creds
 x sync --journal     # upload journal notes, verify in Nextcloud web UI
+                     # (topic notes land in backups/journal/notes/)
+```
+
+**Tests:**
+```bash
+pipx inject toolbox pytest
+~/.local/share/pipx/venvs/toolbox/bin/python -m pytest
 ```

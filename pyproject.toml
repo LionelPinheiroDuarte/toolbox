@@ -15,6 +15,9 @@ dependencies = [
     "keyrings.alt",
 ]
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [tool.setuptools.packages.find]
 include = ["x*"]
 

@@ -67,14 +67,21 @@ def _claude_files():
 
 
 def _journal_files():
+    """Return (local_path, remote_dir) pairs: the dated notes and the task
+    file (so `x notes -t` works on every machine) in backups/journal, and the
+    topic notes of notes/ in backups/journal/notes."""
+    files = []
     if not os.path.isdir(JOURNAL_DIR):
-        return []
-    return sorted([
-        os.path.join(JOURNAL_DIR, f)
-        for f in os.listdir(JOURNAL_DIR)
-        # Dated notes plus the task file, so `x notes -t` works on every machine.
-        if re.match(r"^\d{4}-\d{2}-\d{2}\.md$", f) or f == "tasks.md"
-    ])
+        return files
+    for f in sorted(os.listdir(JOURNAL_DIR)):
+        if re.match(r"^\d{4}-\d{2}-\d{2}\.md$", f) or f == "tasks.md":
+            files.append((os.path.join(JOURNAL_DIR, f), REMOTE_JOURNAL))
+    notes_dir = os.path.join(JOURNAL_DIR, "notes")
+    if os.path.isdir(notes_dir):
+        for f in sorted(os.listdir(notes_dir)):
+            if f.endswith(".md"):
+                files.append((os.path.join(notes_dir, f), f"{REMOTE_JOURNAL}/notes"))
+    return files
 
 
 def _cv_files():
@@ -157,6 +164,25 @@ def _list_remote_tree(base_url, auth, remote_dir):
     return results
 
 
+def _local_path(remote_root, local_root, remote_dir, filename):
+    """Where a file listed under remote_root goes: the same subfolder of
+    local_root as its remote_dir is of remote_root."""
+    rel_dir = os.path.relpath(remote_dir, remote_root)
+    local_dir = local_root if rel_dir == "." else os.path.join(local_root, rel_dir)
+    return os.path.join(local_dir, filename)
+
+
+def _upload_all(base_url, auth, files):
+    """Upload (local_path, remote_dir) pairs, creating each remote dir once."""
+    seen_dirs = set()
+    for path, remote_dir in files:
+        if remote_dir not in seen_dirs:
+            _ensure_remote_dir(base_url, auth, remote_dir)
+            seen_dirs.add(remote_dir)
+        _upload(base_url, auth, path, remote_dir)
+    return len(files)
+
+
 def _download(base_url, auth, remote_dir, filename, local_path):
     r = requests.get(f"{base_url}/{remote_dir}/{filename}", auth=auth)
     r.raise_for_status()
@@ -197,13 +223,13 @@ def restore(claude=False, journal=False, cv=False, skills=False):
     if restore_journal:
         print(info("Journal:"))
         try:
-            files = _list_remote_files(base_url, auth, REMOTE_JOURNAL)
+            entries = _list_remote_tree(base_url, auth, REMOTE_JOURNAL)
         except requests.HTTPError as e:
             print(error(f"  Failed to list remote files: {e}"))
-            files = []
-        for filename in files:
-            local_path = os.path.join(JOURNAL_DIR, filename)
-            _download(base_url, auth, REMOTE_JOURNAL, filename, local_path)
+            entries = []
+        for filename, remote_dir in entries:
+            local_path = _local_path(REMOTE_JOURNAL, JOURNAL_DIR, remote_dir, filename)
+            _download(base_url, auth, remote_dir, filename, local_path)
             total += 1
 
     if restore_cv:
@@ -230,9 +256,7 @@ def restore(claude=False, journal=False, cv=False, skills=False):
             print(error(f"  Failed to list remote files: {e}"))
             entries = []
         for filename, remote_dir in entries:
-            rel_dir = os.path.relpath(remote_dir, REMOTE_SKILLS)
-            local_dir = SKILLS_DIR if rel_dir == "." else os.path.join(SKILLS_DIR, rel_dir)
-            local_path = os.path.join(local_dir, filename)
+            local_path = _local_path(REMOTE_SKILLS, SKILLS_DIR, remote_dir, filename)
             _download(base_url, auth, remote_dir, filename, local_path)
             total += 1
 
@@ -279,10 +303,7 @@ def run(claude=False, journal=False, cv=False, skills=False):
         if not files:
             print(error("  No journal notes found."))
         else:
-            _ensure_remote_dir(base_url, auth, REMOTE_JOURNAL)
-            for path in files:
-                _upload(base_url, auth, path, REMOTE_JOURNAL)
-                total += 1
+            total += _upload_all(base_url, auth, files)
 
     if sync_cv:
         print(info("CV:"))
@@ -308,12 +329,6 @@ def run(claude=False, journal=False, cv=False, skills=False):
         if not files:
             print(error("  No skills found."))
         else:
-            seen_dirs = set()
-            for path, remote_dir in files:
-                if remote_dir not in seen_dirs:
-                    _ensure_remote_dir(base_url, auth, remote_dir)
-                    seen_dirs.add(remote_dir)
-                _upload(base_url, auth, path, remote_dir)
-                total += 1
+            total += _upload_all(base_url, auth, files)
 
     print(success(f"\n{total} file(s) synced to Nextcloud."))
