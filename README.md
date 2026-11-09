@@ -11,6 +11,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 | [`x wtf`](x/commands/wtf/README.md) | Analyze the last failed shell command via AI |
 | [`x notes`](x/commands/notes/README.md) | Show, edit or browse (fzf) journal notes and the task file |
 | [`x repos`](x/commands/repos/README.md) | Clone, pull or push my GitHub repos — one or all |
+| [`x claude`](x/commands/claude/README.md) | tmux popups around Claude Code: one session per project (`projects`), the files it edited and its diff (`edits`) |
 | [`x keys`](x/commands/keys/README.md) | List my tmux shortcuts, read from the `bind -N` notes in `~/.tmux.conf` |
 | [`x sync`](x/commands/sync/README.md) | Sync Claude memory, skills, journal notes and CV project to Nextcloud |
 | `x setup` | Clone dotfiles and run the full Ansible playbook (`--short` for user-level only) |
@@ -21,9 +22,9 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 
 - Python 3.8+
 - pip
-- `batcat` (for `x notes`), `fzf` >= 0.66 and `gio` (for `x notes --browse`)
+- `batcat` (for `x notes`), `fzf` >= 0.66 (for `x notes --browse`, `x claude`) and `gio` (for `x notes --browse`)
 - `gh` CLI (for `x repos clone`)
-- `tmux` >= 3.1 (for `x keys`)
+- `tmux` >= 3.1 (for `x keys`, `x claude`)
 - `OPENROUTER_API_KEY` env variable (for `x wtf`)
 - Nextcloud account + app password (for `x sync`)
 - `ansible-core` + `git` (for `x setup`)
@@ -61,6 +62,12 @@ toolbox/
 │   ├── main.py
 │   ├── commands/
 │   │   ├── __init__.py
+│   │   ├── claude/
+│   │   │   ├── __init__.py
+│   │   │   ├── projects.py    # one tmux session per project
+│   │   │   ├── edits.py       # files Claude edited, its diff
+│   │   │   ├── edits.vim      # ,d and ,D in Vim
+│   │   │   └── README.md
 │   │   ├── keys/
 │   │   │   ├── __init__.py
 │   │   │   └── README.md
@@ -83,7 +90,8 @@ toolbox/
 │   └── utils/
 │       ├── __init__.py
 │       ├── ai.py
-│       └── colors.py
+│       ├── colors.py
+│       └── popup.py           # shared by the fzf popups
 ├── assets/
 │   ├── notes.gif
 │   └── sync.gif

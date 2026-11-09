@@ -3,8 +3,10 @@ import click
 
 from x.commands import notes as notes_cmd
 from x.commands import repos as repos_cmd
-from x.commands import sync as sync_cmd
-from x.commands import setup as setup_cmd
+
+# Commands import their module when they run: keyring and requests (sync)
+# would double the start-up of every x call, and some run on every fzf key
+# or Claude prompt (x claude projects preview / state).
 
 @click.group()
 def cli():
@@ -92,6 +94,7 @@ def push(name, yes, directory):
 @click.option("--restore", "do_restore", is_flag=True, help="Restore files from Nextcloud to local machine.")
 def sync(claude, journal, cv, skills, do_configure, do_restore):
     """Sync Claude memory, skills, journal notes and CV project to Nextcloud."""
+    from x.commands import sync as sync_cmd
     if do_configure:
         sync_cmd.configure()
         return
@@ -113,7 +116,127 @@ def keys(show_all):
 @click.option("--short", is_flag=True, help="User-level only (dotfiles + toolbox, no sudo).")
 def setup(short):
     """Clone or update dotfiles and run the Ansible playbook."""
+    from x.commands import setup as setup_cmd
     setup_cmd.run(short=short)
+
+
+@cli.group()
+def claude():
+    """tmux popups around Claude Code: projects and the files it edited."""
+
+
+@claude.group(invoke_without_command=True)
+@click.pass_context
+def projects(ctx):
+    """One tmux session per project, with Claude in it (fzf picker).
+
+    \b
+    Keys in the list: enter = go (create if needed) · ctrl-x = kill the session
+      ctrl-n = new project named after the query · ctrl-r = restore all saved
+      ctrl-s = go, on the shell window · ctrl-/ = preview
+    """
+    if ctx.invoked_subcommand is None:
+        from x.commands.claude import projects as projects_cmd
+        projects_cmd.pick()
+
+
+@projects.command("open")
+@click.argument("directory", default=".")
+@click.argument("window", required=False, type=click.Choice(["shell"]))
+def projects_open(directory, window):
+    """Open (or jump to) the project in DIRECTORY, on its shell window with "shell"."""
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.open_project(directory, window)
+
+
+@projects.command("new")
+@click.argument("name")
+def projects_new(name):
+    """Create $GITHUB/NAME (git init) and open it."""
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.new_project(name)
+
+
+@projects.command("save")
+def projects_save():
+    """Remember the open project sessions."""
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.save()
+    print(f"Saved {len(projects_cmd.saved_projects())} project(s) to {projects_cmd.SAVED}")
+
+
+@projects.command("restore")
+def projects_restore():
+    """Reopen every saved project, Claude resuming its last conversation."""
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.restore()
+
+
+@projects.command("kill")
+@click.argument("name")
+def projects_kill(name):
+    """Close a project session."""
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.kill_project(name)
+
+
+@projects.command("state")
+@click.argument("state", type=click.Choice(["running", "done", "none"]))
+def projects_state(state):
+    """Claude's state on this pane's session, from Claude Code hooks."""
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.set_state(state)
+
+
+# called back by fzf from the picker
+@projects.command("entries", hidden=True)
+def projects_entries():
+    import os
+    from x.commands.claude import projects as projects_cmd
+    print("\n".join(projects_cmd.entries(os.environ.get("X_CLAUDE_PROJECTS_INFO"))))
+
+
+@projects.command("preview", hidden=True)
+@click.argument("directory")
+@click.argument("name")
+@click.argument("kind")
+def projects_preview(directory, name, kind):
+    from x.commands.claude import projects as projects_cmd
+    projects_cmd.preview(directory, name, kind)
+
+
+@claude.command()
+@click.argument("directory", required=False)
+# called back by fzf from the picker (see x/commands/claude/edits.py)
+@click.option("--list", "list_files", nargs=2, hidden=True)
+@click.option("--preview", nargs=4, hidden=True)
+@click.option("--toggle", hidden=True)
+@click.option("--scope", nargs=2, hidden=True)
+@click.option("--vimdiff", nargs=2, hidden=True)
+def edits(directory, list_files, preview, toggle, scope, vimdiff):
+    """Files Claude recently wrote: its diff, then Vim (fzf picker).
+
+    With DIRECTORY, only the files of the repo holding it.
+
+    \b
+    Keys in the list: enter = vim · ctrl-d = vimdiff before/after · ctrl-f = diff/file
+                      ctrl-g = this repo/all · ctrl-y = copy the path · ctrl-/ = preview
+    Keys in Vim: ,d = git-diff-like view · ,D = side-by-side vimdiff
+    """
+    from x.commands.claude import edits as edits_cmd
+    if list_files:
+        scope_path, info_path = list_files
+        print("\n".join(edits_cmd.entries(edits_cmd._read(scope_path), info_path)))
+    elif preview:
+        edits_cmd.preview(*preview)
+    elif toggle:
+        edits_cmd.toggle(toggle)
+    elif scope:
+        edits_cmd.flip_scope(*scope)
+    elif vimdiff:
+        edits_cmd.vimdiff(*vimdiff)
+    else:
+        edits_cmd.browse(directory)
 
 
 def main():
