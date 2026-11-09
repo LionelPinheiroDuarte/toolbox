@@ -102,6 +102,14 @@ def sync(claude, journal, cv, skills, do_configure, do_restore):
 
 
 @cli.command()
+@click.option("--all", "show_all", is_flag=True, help="Also list tmux's own bindings.")
+def keys(show_all):
+    """Show my tmux shortcuts (the bindings with a note in ~/.tmux.conf)."""
+    from x.commands import keys as keys_cmd
+    keys_cmd.run(show_all=show_all)
+
+
+@cli.command()
 @click.option("--short", is_flag=True, help="User-level only (dotfiles + toolbox, no sudo).")
 def setup(short):
     """Clone or update dotfiles and run the Ansible playbook."""

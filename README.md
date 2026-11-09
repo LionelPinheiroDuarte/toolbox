@@ -11,6 +11,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 | [`x wtf`](x/commands/wtf/README.md) | Analyze the last failed shell command via AI |
 | [`x notes`](x/commands/notes/README.md) | Show, edit or browse (fzf) journal notes and the task file |
 | [`x repos`](x/commands/repos/README.md) | Clone, pull or push my GitHub repos — one or all |
+| [`x keys`](x/commands/keys/README.md) | List my tmux shortcuts, read from the `bind -N` notes in `~/.tmux.conf` |
 | [`x sync`](x/commands/sync/README.md) | Sync Claude memory, skills, journal notes and CV project to Nextcloud |
 | `x setup` | Clone dotfiles and run the full Ansible playbook (`--short` for user-level only) |
 
@@ -22,6 +23,7 @@ A personal CLI toolkit built in Python. All commands live under a single entry p
 - pip
 - `batcat` (for `x notes`), `fzf` >= 0.66 and `gio` (for `x notes --browse`)
 - `gh` CLI (for `x repos clone`)
+- `tmux` >= 3.1 (for `x keys`)
 - `OPENROUTER_API_KEY` env variable (for `x wtf`)
 - Nextcloud account + app password (for `x sync`)
 - `ansible-core` + `git` (for `x setup`)
@@ -59,6 +61,9 @@ toolbox/
 │   ├── main.py
 │   ├── commands/
 │   │   ├── __init__.py
+│   │   ├── keys/
+│   │   │   ├── __init__.py
+│   │   │   └── README.md
 │   │   ├── notes/
 │   │   │   ├── __init__.py
 │   │   │   ├── browse.py      # --browse: the fzf popup
@@ -94,6 +99,7 @@ toolbox/
 - [x] `x wtf` — capture and explain last failed command via AI (OpenRouter)
 - [x] `x notes` — browse journal notes with syntax highlighting
 - [x] `x notes --browse` — fzf popup to open, create and trash notes
+- [x] `x keys` — tmux shortcuts, from the config's own notes
 - [x] `x repos` — clone, pull and push GitHub repos
 - [x] `x sync` — sync Claude memory, skills, journal notes and CV project to Nextcloud
 - [x] `x setup` — provision a new machine from dotfiles + Ansible
