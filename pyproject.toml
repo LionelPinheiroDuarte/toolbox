@@ -21,5 +21,8 @@ test = ["pytest"]
 [tool.setuptools.packages.find]
 include = ["x*"]
 
+[tool.setuptools.package-data]
+"x.commands.claude" = ["*.vim"]
+
 [project.scripts]
 x = "x.main:main"
