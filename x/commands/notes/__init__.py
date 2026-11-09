@@ -4,8 +4,9 @@ import subprocess
 from datetime import date
 from x.utils.colors import info, error
 
-JOURNAL_DIR = os.path.expanduser("~/documents/journal")
-TASKS_FILE = os.path.join(os.path.expanduser("~/documents/journal"), "tasks.md")
+from x.commands.notes.store import JOURNAL_DIR, tasks_path
+
+TASKS_FILE = tasks_path()
 
 def _bat(path, title):
     subprocess.run(["batcat", "--language=md", f"--file-name={title}", path])
